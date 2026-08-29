@@ -1,0 +1,25 @@
+[Unit]
+Description=LFM Inference Server — lfm-default (ornith)
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=gio
+WorkingDirectory=/home/gio
+ExecStart=/home/gio/llama.cpp/llama-server --model /home/gio/models/ornith-1.5-35b-a3b/Ornith-1.5-35B-A3B-Q4_K_M.gguf --port 8080 --host 127.0.0.1 --threads 6 --ctx-size 32768
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/tmp/lfm-lfm-default.log
+StandardError=append:/tmp/lfm-lfm-default.log
+
+MemoryMax=14G
+CPUQuota=800%
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/gio/models /home/gio/.physis /tmp
+
+[Install]
+WantedBy=multi-user.target

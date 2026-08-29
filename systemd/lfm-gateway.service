@@ -1,0 +1,25 @@
+[Unit]
+Description=LFM Gateway — Unified API for all LFM stacks
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=gio
+WorkingDirectory=/home/gio
+ExecStart=/usr/bin/python3 /home/gio/llama.cpp/lfm-gateway.py --port 8090
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/tmp/lfm-gateway.log
+StandardError=append:/tmp/lfm-gateway.log
+
+MemoryMax=2G
+CPUQuota=200%
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/gio/models /home/gio/.physis /tmp
+
+[Install]
+WantedBy=multi-user.target

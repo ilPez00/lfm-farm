@@ -1,0 +1,27 @@
+[Unit]
+Description=LFM Inference Server — lfm-toolcall-router
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=gio
+WorkingDirectory=/home/gio
+ExecStart=/usr/bin/python3 /home/gio/llama.cpp/lfm_router.py --listen 127.0.0.1:8080 --tool-server http://127.0.0.1:8081 --brain-server http://127.0.0.1:8082
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/tmp/lfm-lfm-toolcall-router.log
+StandardError=append:/tmp/lfm-lfm-toolcall-router.log
+
+# Resource limits
+MemoryMax=14G
+CPUQuota=800%
+
+# Security
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/gio/models /home/gio/.physis /tmp
+
+[Install]
+WantedBy=multi-user.target

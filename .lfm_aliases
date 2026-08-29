@@ -1,0 +1,31 @@
+# LFM — Local File Manager for Axiom
+# Usage: source lfm.sh && lfm <tier>
+
+LFM_BASE="/home/gio/models"
+LFM_ACTIVE="$LFM_BASE/active"
+LFM_MANIFEST="$LFM_BASE/manifests/models.yaml"
+
+# Quick aliases
+alias lfm='bash /home/gio/llama.cpp/lfm.sh'
+alias lfm-status='bash /home/gio/llama.cpp/lfm.sh status'
+alias lfm-stop='bash /home/gio/llama.cpp/lfm.sh stop'
+alias lfm-default='bash /home/gio/llama.cpp/lfm.sh default'
+alias lfm-heavy='bash /home/gio/llama.cpp/lfm.sh heavy'
+alias lfm-max='bash /home/gio/llama.cpp/lfm.sh max'
+alias lfm-glm='bash /home/gio/llama.cpp/lfm.sh glm'
+
+# Show current status
+lfm_info() {
+  echo "=== LFM Status ==="
+  echo ""
+  echo "Active tier:"
+  readlink "$LFM_ACTIVE/default" 2>/dev/null | sed 's|.*/||'
+  echo ""
+  echo "Running servers:"
+  ps aux | grep -E "llama-server|ggml-rpc-server|coli" | grep -v grep | awk '{print $11, $12, $13}' || echo "  none"
+  echo ""
+  echo "Model files:"
+  for d in "$LFM_BASE"/*/; do
+    [[ -f "$d"/*.gguf ]] && echo "  $(basename $d): $(ls -lh "$d"/*.gguf | awk '{print $5}')"
+  done
+}

@@ -1,0 +1,123 @@
+# LFM — Local File Manager manifest
+# Axiom-managed model farm for omo+pansa fleet
+
+LFM_VERSION: 1
+LFM_BASE: /home/gio/models
+
+MODELS:
+  # ─── Tier 0: Tool calling (fast agent loop) ───
+  lfm2.5-8b-a1b:
+    path: lfm2.5-8b-a1b/LFM2.5-8B-A1B-Q4_K_M.gguf
+    engine: llama.cpp
+    arch: lfm2_moe
+    params_total: 8B
+    params_active: 1.5B
+    quant: Q4_K_M
+    size_gb: 5
+    ctx: 128K
+    hardware: single_box
+    ram_needed_gb: 3
+    speed_tps: 50
+    use: tool_calling, agent_loop, fast_inference
+    status: downloading
+    tool_calling: native
+
+  # ─── Tier 1: Daily driver (single-box, fast, Colibri) ───
+  ornith-1.5-35b-a3b:
+    path: ornith-1.5-35b-a3b/Ornith-1.5-35B-A3B-Q4_K_M.gguf
+    engine: colibri
+    arch: qwen3.5_moe
+    params_total: 35B
+    params_active: 3B
+    experts: 256
+    active_experts: 8
+    quant: Q4_K_M
+    size_gb: 21
+    ctx: 256K
+    hardware: single_box
+    ram_needed_gb: 8
+    speed_tps: 15-20
+    use: coding, daily, agentic, reasoning
+    status: ready
+
+  # ─── Tier 2: Heavy (RPC split, dense quality) ───
+  qwen3.8-27b:
+    path: qwen3.8-27b/Qwen3.8-27B-Q4_K_M.gguf
+    engine: llama.cpp
+    arch: dense
+    params_total: 27B
+    params_active: 27B
+    quant: Q4_K_M
+    size_gb: 18
+    ctx: 256K
+    hardware: rpc_split
+    rpc_nodes:
+      - omo:192.168.1.7
+      - pansa:192.168.1.15
+    ram_per_node_gb: 9
+    speed_tps: 3-5
+    use: complex_reasoning, long_context, accuracy_critical
+    status: ready
+
+  # ─── Tier 3: Frontier (Colibri, if supported) ───
+  qwen3.8-max:
+    path: qwen3.8-max/
+    engine: colibri
+    arch: qwen3.5_moe
+    params_total: 2.4T
+    params_active: ~20B
+    quant: TBD
+    size_gb: TBD
+    ctx: 1M
+    hardware: single_box
+    ram_needed_gb: 12
+    speed_tps: 8-12
+    use: frontier_coding, research, hardest_tasks
+    status: pending_colibri_support
+
+  # ─── Tier 4: Alternative frontier ───
+  glm-5.2:
+    path: glm-5.2/
+    engine: colibri
+    arch: glm_moe
+    params_total: 744B
+    params_active: ~20B
+    quant: TBD
+    size_gb: TBD
+    ctx: 1M
+    hardware: single_box
+    ram_needed_gb: 12
+    speed_tps: 5-10
+    use: alternative_frontier
+    status: pending
+
+# ─── Active symlinks (what Axiom points at) ───
+ACTIVE_SYMLINKS:
+  default: ornith-1.5-35b-a3b
+  heavy: qwen3.8-27b
+  max: qwen3.8-max
+  glm: glm-5.2
+  toolcall: lfm2.5-8b-a1b
+
+# ─── Tool calling pairings ───
+TOOLCALL_PAIRS:
+  # LFM2.5 handles tool calls, smart model handles reasoning
+  - name: fast_agent
+    tool_model: lfm2.5-8b-a1b
+    brain_model: ornith-1.5-35b-a1b
+    description: "LFM2.5 executes tool calls, ornith does reasoning"
+
+  - name: max_agent
+    tool_model: lfm2.5-8b-a1b
+    brain_model: qwen3.8-27b
+    description: "LFM2.5 executes tool calls, qwen3.8-27b does reasoning"
+
+# ─── Engine configs ───
+ENGINES:
+  colibri:
+    bin: /home/gio/colibri/coli
+    supported_archs: [qwen3.5_moe, glm_moe, kimi_moe, deepseek_moe, olmoe]
+  llama.cpp:
+    bin: /home/gio/llama.cpp/llama-server
+    rpc_bin: /home/gio/llama.cpp/ggml-rpc-server
+    supported_archs: [dense, moe, lfm2_moe]
